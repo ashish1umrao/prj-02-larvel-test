@@ -16,19 +16,20 @@ class Car extends Model
     protected $fillable = ['name','founded','description'];
     
 
-
+    // Car Model Function
 
     public function carmodels()
     {
         return $this->hasMany(CarModel::class);
     }
 
+    // Car Head Quarter room
     public function headQuarter()
     {
         return $this->hasOne(headQuarter::class);
     }
 
-    
+    // Car enginess model
     public function engines()
     {
         return $this->hasManyThrough(
