@@ -22,9 +22,15 @@ use App\Http\Controllers\Controller;
  *     )
  * )
  */
+
+// This is a normal Root Controller 
+// Root column data to modify to learn data
+// Dummy Data
+
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+    // default controller
 
        
 }
