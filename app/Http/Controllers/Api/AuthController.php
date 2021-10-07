@@ -11,7 +11,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 // LOAD LANG FILE
 use Illuminate\Support\Facades\lang;
-class AuthController extends ApiControllercls
+class AuthController extends ApiController
 {       
 
     /****************************************************************************************

@@ -26,7 +26,7 @@ Route::get('/', function () {
 });
 
 // Route::get('/forgot',[AuthController::class, 'forgot']);
-// Route::post('/forgot-password',[AuthController::class, 'forgotPassword'])->name('forgot-password');
+Route::post('/forgot-password',[CarsController::class, 'forgotPassword']);
 
 Route::get('/dashboard1', function () {
     return "Hi there";

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Car;
+use App\Models\CarModel;
+use App\Models\Product;
 class CarsController extends Controller
 {
     /**
@@ -43,12 +45,23 @@ class CarsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    { //echo "<pre>"; print_r($request);
-        $car = new Car;
-        $car->name          = $request->input('name');
-        $car->founded       = $request->input('founded');
-        $car->description   = $request->input('description');
-        $car->save();
+    { 
+        
+        $request->validate([
+                'name'          => 'required|unique:cars',
+                'founded'       =>  'required|integer|min:0|max:2050',
+                'description'   => 'required'
+
+        ]);
+
+        //If its valid, it will process
+       //If its Not valid, throw validationException
+        $car    = Car::create([
+            'name'         => $request->input('name'),
+            'founded'      => $request->input('founded'),
+            'description'  => $request->input('description')
+        ]);
+       
        return redirect('/cars');
     }
 
@@ -60,7 +73,11 @@ class CarsController extends Controller
      */
     public function show($id)
     {
-        //
+        $car = Car::find($id);
+        $products = Product::find($id); 
+        //print_r($products);
+        return view('cars.show')->with('car',$car);
+        
     }
 
     /**
@@ -71,8 +88,9 @@ class CarsController extends Controller
      */
     public function edit($id)
     {   
-        $car = Car::find($id)->first();
-        //dd($id);
+        $car = Car::find($id);
+        
+       
         return view('cars.edit')->with
             ('EditData', $car
         );
@@ -108,4 +126,11 @@ class CarsController extends Controller
 
         return redirect('/cars');
     }
+
+     public function forgotPassword(Request $request)
+     {
+        return view ('hello forget passowrd');
+     }
+
+
 }

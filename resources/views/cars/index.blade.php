@@ -43,8 +43,10 @@
                             <span class="uppercase text-blue-500 font-bold text-xs italic">
                                 Founded : {{ $carInfo['founded'] }}
                             </span>
-                            <h2 class="text-gray-700 text-5xl">
+                            <h2 class="text-gray-700 text-5xl hover:text-gray-500">
+                                   <a href="/cars/{{ $carInfo['id'] }}">
                                     {{ $carInfo['name'] }}
+                                   </a>
                             </h2>
                             <p class=" text-lg text-gray-700 py-6">
                                 {{ $carInfo['description'] }}

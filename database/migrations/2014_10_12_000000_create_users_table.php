@@ -20,15 +20,10 @@ class CreateUsersTable extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
-            $table->int('otp');
             $table->foreignId('current_team_id')->nullable();
             $table->text('profile_photo_path')->nullable();
             $table->timestamps();
-            $table->string('currentIp', 100)->nullable()->default('text');
-            $table->enum('email_verify_status', ['Y', 'N'])->nullable()->default(['N', 'Y']);;
             
-            
-
         });
     }
 
