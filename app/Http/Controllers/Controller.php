@@ -24,7 +24,12 @@ use App\Http\Controllers\Controller;
  */
 
 // All Data rollout
-
+    /****************************************************************************************
+     * *** FUNCTION NAME    : Mail Controller  
+     * *** FUNCTION PURPOSE : This Function Used For Registration purpose
+     * *** CREATED BY       : Ashish UMrao
+     * *** CREATED DATA     : 07 OCT 2021
+     ***************************************************************************************/
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
