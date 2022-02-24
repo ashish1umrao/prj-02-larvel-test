@@ -19,7 +19,7 @@ class CreateCarProductionDataTable extends Migration
             $table->date('created_at');
             $table->foreign('model_id')
                   ->references('id')
-                  ->on('car_models')
+                  ->on('cars_model')
                   ->onDelete('cascade');
         });
     }

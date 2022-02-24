@@ -3,16 +3,32 @@
 namespace L5Swagger;
 
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use L5Swagger\Exceptions\L5SwaggerException;
 use OpenApi\Annotations\OpenApi;
 use OpenApi\Annotations\Server;
-use function OpenApi\scan as openApiScan;
+use OpenApi\Generator as OpenApiGenerator;
+use OpenApi\Util;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Dumper as YamlDumper;
 use Symfony\Component\Yaml\Yaml;
 
 class Generator
 {
+    protected const SCAN_OPTION_PROCESSORS = 'processors';
+    protected const SCAN_OPTION_PATTERN = 'pattern';
+    protected const SCAN_OPTION_ANALYSER = 'analyser';
+    protected const SCAN_OPTION_ANALYSIS = 'analysis';
+    protected const SCAN_OPTION_EXCLUDE = 'exclude';
+
+    protected const AVAILABLE_SCAN_OPTIONS = [
+        self::SCAN_OPTION_PATTERN,
+        self::SCAN_OPTION_ANALYSER,
+        self::SCAN_OPTION_ANALYSIS,
+        self::SCAN_OPTION_EXCLUDE,
+    ];
+
     /**
      * @var string|array
      */
@@ -64,17 +80,25 @@ class Generator
     protected $security;
 
     /**
+     * @var array
+     */
+    protected $scanOptions;
+
+    /**
      * Generator constructor.
-     * @param array $paths
-     * @param array $constants
-     * @param bool $yamlCopyRequired
-     * @param SecurityDefinitions $security
+     *
+     * @param  array  $paths
+     * @param  array  $constants
+     * @param  bool  $yamlCopyRequired
+     * @param  SecurityDefinitions  $security
+     * @param  array  $scanOptions
      */
     public function __construct(
         array $paths,
         array $constants,
         bool $yamlCopyRequired,
-        SecurityDefinitions $security
+        SecurityDefinitions $security,
+        array $scanOptions
     ) {
         $this->annotationsDir = $paths['annotations'];
         $this->docDir = $paths['docs'];
@@ -85,6 +109,7 @@ class Generator
         $this->constants = $constants;
         $this->yamlCopyRequired = $yamlCopyRequired;
         $this->security = $security;
+        $this->scanOptions = $scanOptions;
     }
 
     /**
@@ -103,13 +128,13 @@ class Generator
     /**
      * Check directory structure and permissions.
      *
-     * @throws L5SwaggerException
-     *
      * @return Generator
+     *
+     * @throws L5SwaggerException
      */
     protected function prepareDirectory(): self
     {
-        if (File::exists($this->docDir) && ! is_writable($this->docDir)) {
+        if (File::exists($this->docDir) && ! File::isWritable($this->docDir)) {
             throw new L5SwaggerException('Documentation storage directory is not writable');
         }
 
@@ -147,12 +172,84 @@ class Generator
      */
     protected function scanFilesForDocumentation(): self
     {
-        $this->openApi = openApiScan(
-            $this->annotationsDir,
-            ['exclude' => $this->excludedDirs]
-        );
+        $generator = $this->createOpenApiGenerator();
+        $finder = $this->createScanFinder();
+
+        // Analysis.
+        $analysis = Arr::get($this->scanOptions, self::SCAN_OPTION_ANALYSIS);
+
+        $this->openApi = $generator->generate($finder, $analysis);
 
         return $this;
+    }
+
+    /**
+     * Prepares generator for generating the documentation.
+     *
+     * @return OpenApiGenerator $generator
+     */
+    protected function createOpenApiGenerator(): OpenApiGenerator
+    {
+        $generator = new OpenApiGenerator();
+
+        // Processors.
+        $this->setProcessors($generator);
+
+        // Analyser.
+        $this->setAnalyser($generator);
+
+        return $generator;
+    }
+
+    /**
+     * @param  OpenApiGenerator  $generator
+     * @return void
+     */
+    protected function setProcessors(OpenApiGenerator $generator): void
+    {
+        $processorClasses = Arr::get($this->scanOptions, self::SCAN_OPTION_PROCESSORS, []);
+        $processors = [];
+
+        foreach ($generator->getProcessors() as $processor) {
+            $processors[] = $processor;
+            if ($processor instanceof \OpenApi\Processors\BuildPaths) {
+                foreach ($processorClasses as $customProcessor) {
+                    $processors[] = new $customProcessor();
+                }
+            }
+        }
+
+        if (! empty($processors)) {
+            $generator->setProcessors($processors);
+        }
+    }
+
+    /**
+     * @param  OpenApiGenerator  $generator
+     * @return void
+     */
+    protected function setAnalyser(OpenApiGenerator $generator): void
+    {
+        $analyser = Arr::get($this->scanOptions, self::SCAN_OPTION_ANALYSER);
+
+        if (! empty($analyser)) {
+            $generator->setAnalyser($analyser);
+        }
+    }
+
+    /**
+     * Prepares finder for determining relevant files.
+     *
+     * @return Finder
+     */
+    protected function createScanFinder(): Finder
+    {
+        $pattern = Arr::get($this->scanOptions, self::SCAN_OPTION_PATTERN);
+        $exclude = Arr::get($this->scanOptions, self::SCAN_OPTION_EXCLUDE);
+
+        $exclude = ! empty($exclude) ? $exclude : $this->excludedDirs;
+
+        return Util::finder($this->annotationsDir, $exclude, $pattern);
     }
 
     /**
@@ -176,9 +273,9 @@ class Generator
     /**
      * Save documentation as json file.
      *
-     * @throws Exception
-     *
      * @return Generator
+     *
+     * @throws Exception
      */
     protected function saveJson(): self
     {

@@ -1,62 +1,65 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Dashboard') }}
-        </h2>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="m-auto w-4/5 py-24">
-                    <div class="text-center">
-                        <h1 class="text-5xl uppercase bold">
-                            CARS
-                        </h1>
-                    </div>
-                    <div class="pt-10">
-                        <a 
-                            href="/cars/create" 
-                            class="border-b-2 pb-2 border-dotted itallic text-gray-500">
-                            Add a new car &rarr;
-                        </a>
-                    </div>
-                    <div class="w-5/6 py-10">
-                        @foreach ($cars as $carInfo) 
-                        <div class="m-auto">
-                            <div class="float-right">
-                                <a 
-                                    href="/cars/{{ $carInfo['id'] }}/edit" 
-                                    class="border-b-2 pb-2 border-dotted itallic text-green-500">
-                                    Edit car &rarr;
-                                </a>
-                                <form action="/cars/{{ $carInfo['id'] }}" class="pt-3" method="POST">
+@extends('layouts.app', ['activePage' => 'table', 'titlePage' => __('Table List')])
+@section('content')
+<div class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        @if (session('status'))
+                <h6 class="alert alert-success">{{ session('status') }}</h6>
+            @endif
+          <div class="card">
+            <div class="card-header card-header-primary">
+              <h4 class="card-title ">Cars</h4>
+              <p class="card-category"> Here you can manage Cars</p>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                <div class="col-12 text-right">
+                  <a href="/cars-create" class="btn btn-sm btn-primary">Add Cars</a>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table">
+                     <thead class=" text-primary">
+                        <tr>
+                            <th>Image</th>
+                            <th>Founded</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th class="text-right">Actions</th>
+                       </tr>
+                    </thead>
+                  <tbody>
+                     @foreach ($cars as $carInfo) 
+                        <tr>
+                            <td><img src="{{ asset('images/'.$carInfo->car_image) }}" height="100" width="100"></td>
+                            <td>{{ $carInfo->founded }}</td>
+                            <td>{{ $carInfo->name }}</td>
+                            <td><textarea rows="3" cols="100">{{ $carInfo->description }}</textarea></td>
+                            <td class="td-actions text-right">
+                                  <a rel="tooltip" class="btn btn-success btn-link" href="/cars/{{ $carInfo->id }}/edit" data-original-title="" title="Edit Car Details">
+                                      <i class="material-icons">edit</i>
+                                      <div class="ripple-container"></div>
+                                 </a>
+                                 <form action="{{ url('delete-car/'.$carInfo->id) }}" class="pt-3" method="POST">
+                                    @method('DELETE')
                                     @csrf
-                                    @method('delete')
-                                    <button 
-                                        type="submit"
-                                        class="border-b-2 pb-2 border-dotted italic text-red-500">
-                                            Delete &rarr;
+                                    <button type="submit" class="btn btn-danger btn-link">
+                                        <i class="material-icons">delete</i>
+                                      <div class="ripple-container"></div>
                                     </button>
                                 </form>
-                            </div>
-                            <span class="uppercase text-blue-500 font-bold text-xs italic">
-                                Founded : {{ $carInfo['founded'] }}
-                            </span>
-                            <h2 class="text-gray-700 text-5xl hover:text-gray-500">
-                                   <a href="/cars/{{ $carInfo['id'] }}">
-                                    {{ $carInfo['name'] }}
-                                   </a>
-                            </h2>
-                            <p class=" text-lg text-gray-700 py-6">
-                                {{ $carInfo['description'] }}
-                            </p>
-                            <hr class="mt-4 mb-8">
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
+
+                            </td>
+                      </tr>
+                      @endforeach
+                     </tbody>
+                </table>
+              </div>
             </div>
-        </div>
+          </div>
+      </div>
     </div>
-</x-app-layout>
+  </div>
+</div>
+ @endsection

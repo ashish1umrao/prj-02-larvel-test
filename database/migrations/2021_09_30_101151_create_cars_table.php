@@ -18,13 +18,16 @@ class CreateCarsTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->integer('founded');
+            $table->string('car_image');
             $table->longText('description')->nullable()->default('description');
             $table->timestamps();
         });
         Schema::create('cars_model', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('car_id');
+            $table->string('car_name');
             $table->string('model_name');
+            $table->string('model_image');
             $table->timestamps();
             $table->foreign('car_id')
                   ->refrence('id')

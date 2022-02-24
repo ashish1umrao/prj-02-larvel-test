@@ -40,6 +40,8 @@ export class JsonSchemaForm extends Component {
     const { dispatchInitialValue, value, onChange } = this.props
     if(dispatchInitialValue) {
       onChange(value)
+    } else if(dispatchInitialValue === false) {
+      onChange("")
     }
   }
 
@@ -128,7 +130,7 @@ export class JsonSchema_array extends PureComponent {
     this.state = { value: valueOrEmptyList(props.value), schema: props.schema}
   }
 
-  componentWillReceiveProps(props) {
+  UNSAFE_componentWillReceiveProps(props) {
     const value = valueOrEmptyList(props.value)
     if(value !== this.state.value)
       this.setState({ value })
@@ -181,7 +183,7 @@ export class JsonSchema_array extends PureComponent {
     const schemaItemsEnum = schema.getIn(["items", "enum"])
     const schemaItemsType = schema.getIn(["items", "type"])
     const schemaItemsFormat = schema.getIn(["items", "format"])
-    const schemaItemsSchema = schema.getIn(["items", "schema"])
+    const schemaItemsSchema = schema.get("items")
     let ArrayItemsComponent
     let isArrayItemText = false
     let isArrayItemFile = (schemaItemsType === "file" || (schemaItemsType === "string" && schemaItemsFormat === "binary")) ? true : false
@@ -264,7 +266,7 @@ export class JsonSchema_array extends PureComponent {
             title={arrayErrors.length ? arrayErrors : ""}
             onClick={this.addItem}
           >
-            Add item
+            Add {schemaItemsType ? `${schemaItemsType} ` : ""}item
           </Button>
         ) : null}
       </div>

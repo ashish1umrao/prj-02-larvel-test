@@ -6,10 +6,10 @@ if (! function_exists('swagger_ui_dist_path')) {
     /**
      * Returns swagger-ui composer dist path.
      *
-     * @param string $documentation
-     * @param null $asset
-     *
+     * @param  string  $documentation
+     * @param  null  $asset
      * @return string
+     *
      * @throws L5SwaggerException
      */
     function swagger_ui_dist_path(string $documentation, $asset = null)
@@ -49,10 +49,10 @@ if (! function_exists('l5_swagger_asset')) {
     /**
      * Returns asset from swagger-ui composer package.
      *
-     * @param string $documentation
+     * @param  string  $documentation
      * @param $asset string
-     *
      * @return string
+     *
      * @throws L5SwaggerException
      */
     function l5_swagger_asset(string $documentation, $asset)
@@ -63,6 +63,8 @@ if (! function_exists('l5_swagger_asset')) {
             throw new L5SwaggerException(sprintf('Requested L5 Swagger asset file (%s) does not exists', $asset));
         }
 
-        return route('l5-swagger.'.$documentation.'.asset', $asset).'?v='.md5_file($file);
+        $useAbsolutePath = config('l5-swagger.documentations.'.$documentation.'.paths.use_absolute_path', true);
+
+        return route('l5-swagger.'.$documentation.'.asset', $asset, $useAbsolutePath).'?v='.md5_file($file);
     }
 }

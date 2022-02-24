@@ -19,8 +19,9 @@ class GeneratorFactory
     /**
      * Make Generator Instance.
      *
-     * @param string $documentation
+     * @param  string  $documentation
      * @return Generator
+     *
      * @throws L5SwaggerException
      */
     public function make(string $documentation): Generator
@@ -28,6 +29,7 @@ class GeneratorFactory
         $config = $this->configFactory->documentationConfig($documentation);
 
         $paths = $config['paths'];
+        $scanOptions = $config['scanOptions'] ?? [];
         $constants = $config['constants'] ?? [];
         $yamlCopyRequired = $config['generate_yaml_copy'] ?? false;
 
@@ -40,7 +42,8 @@ class GeneratorFactory
             $paths,
             $constants,
             $yamlCopyRequired,
-            $security
+            $security,
+            $scanOptions
         );
     }
 }

@@ -6,10 +6,12 @@
 
 namespace OpenApi\Tests;
 
+use OpenApi\Analysis;
 use OpenApi\Generator;
 use OpenApi\Logger;
 use OpenApi\Processors\OperationId;
 use OpenApi\Util;
+use Psr\Log\NullLogger;
 
 class GeneratorTest extends OpenApiTestCase
 {
@@ -43,20 +45,29 @@ class GeneratorTest extends OpenApiTestCase
         $this->assertSpecEquals(file_get_contents(sprintf('%s/%s.yaml', $sourceDir, basename($sourceDir))), $openapi);
     }
 
-    public function testLogger()
+    public function testUsingPsrLogger()
     {
-        // reset test logger
         Logger::getInstance()->log = function ($entry, $type) {
             $this->fail('Wrong logger');
         };
 
-        $this->assertOpenApiLogEntryContains('The annotation @SWG\Definition() is deprecated.');
-        $this->assertOpenApiLogEntryContains('Required @OA\Info() not found');
-        $this->assertOpenApiLogEntryContains('Required @OA\PathItem() not found');
-
-        (new Generator($this->getPsrLogger(true)))
+        (new Generator(new NullLogger()))
             ->setAliases(['swg' => 'OpenApi\Annotations'])
             ->generate($this->fixtures('Deprecated.php'));
+    }
+
+    public function testUsingLegacyLogger()
+    {
+        $legacyLoggerCalled = false;
+        Logger::getInstance()->log = function ($entry, $type) use (&$legacyLoggerCalled) {
+            $legacyLoggerCalled = true;
+        };
+
+        (new Generator())
+            ->setAliases(['swg' => 'OpenApi\Annotations'])
+            ->generate($this->fixtures('Deprecated.php'));
+
+        $this->assertTrue($legacyLoggerCalled, 'Expected legacy logger to be called');
     }
 
     public function processorCases()
@@ -81,5 +92,27 @@ class GeneratorTest extends OpenApiTestCase
                 $this->assertSpecEquals($expected, $processor->isHash());
             }
         }
+    }
+
+    public function testAddProcessor()
+    {
+        $generator = new Generator();
+        $processors = $generator->getProcessors();
+        $generator->addProcessor(function (Analysis $analysis) {
+        });
+
+        $this->assertLessThan(count($generator->getProcessors()), count($processors));
+    }
+
+    public function testRemoveProcessor()
+    {
+        $generator = new Generator();
+        $processors = $generator->getProcessors();
+        $processor = function (Analysis $analysis) {
+        };
+        $generator->addProcessor($processor);
+        $generator->removeProcessor($processor);
+
+        $this->assertEquals($processors, $generator->getProcessors());
     }
 }

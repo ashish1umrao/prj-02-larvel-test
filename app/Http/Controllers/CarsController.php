@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 class CarsController extends Controller
 {
     /**
@@ -17,11 +18,7 @@ class CarsController extends Controller
     public function index()
     {
         //GET ALL DATA
-        $cars = Car::all()->toArray();
-        //echo "<pre>"; var_dump($cars); die;
-        //$cars = Car::where('name','=','AUDI')
-        //->get();
-        //dd($cars);
+        $cars =  DB::select(DB::raw("CALL SelectAllCars"));      
         return view('cars.index', [
             'cars' => $cars
         ]); 
@@ -33,7 +30,7 @@ class CarsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function create()
-    {
+    {   
         //ADDEDIT PAGE DATA
         return view('cars.create');
     }
@@ -45,24 +42,32 @@ class CarsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    { 
+    { //echo "<pre>"; print_r($request); die; 
         
         $request->validate([
                 'name'          => 'required|unique:cars',
                 'founded'       =>  'required|integer|min:0|max:2050',
-                'description'   => 'required'
+                'description'   => 'required',
+                'image'         => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
 
         ]);
+
+        // FOR IMAGE UPLOAD
+
+        $imageName = time().'.'.$request->image->extension();  
+     
+        $request->image->move(public_path('images'), $imageName);
 
         //If its valid, it will process
        //If its Not valid, throw validationException
         $car    = Car::create([
             'name'         => $request->input('name'),
             'founded'      => $request->input('founded'),
-            'description'  => $request->input('description')
+            'description'  => $request->input('description'),
+            'car_image'    => $imageName
         ]);
-       
-       return redirect('/cars');
+       return redirect()->back()->with('status','Data Added Successfully');
+
     }
 
     /**
@@ -72,12 +77,10 @@ class CarsController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show($id)
-    {
+    { 
         $car = Car::find($id);
         $products = Product::find($id); 
-        //print_r($products);
         return view('cars.show')->with('car',$car);
-        
     }
 
     /**
@@ -86,14 +89,11 @@ class CarsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {   
+
         $car = Car::find($id);
-        
-       
-        return view('cars.edit')->with
-            ('EditData', $car
-        );
+        return view('cars.edit')->with('EditData', $car);
     }
 
     /**
@@ -103,34 +103,33 @@ class CarsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+
     public function update(Request $request, $id)
-    {
-        $car =  Car::where('id',$id)
+    {  
+        //FOR IMAGE UPLOAD
+        $imageName = time().'.'.$request->image->extension();  
+        $request->image->move(public_path('images'), $imageName);
+        
+        $car    =  Car::where('id',$id)
         ->update([
                 'name'          =>   $request->input('name'),
                 'founded'       =>   $request->input('founded'),
                 'description'   =>   $request->input('description'),
-        ]);
-        return redirect('/cars');
+                'car_image'     =>   $imageName,
+                ]);
+        return redirect()->back()->with('status','Data Updated Successfully');
     }
-
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Car $car)
+    public function destroy($id)
     {
-        $car->delete();
-
-        return redirect('/cars');
-    }
-
-     public function forgotPassword(Request $request)
-     {
-        return view ('hello forget passowrd');
-     }
-
+        $student = Car::find($id);
+        $student->delete();
+        return redirect()->back()->with('status','Data Deleted Successfully');
+    }     
 
 }

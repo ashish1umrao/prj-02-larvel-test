@@ -13,7 +13,7 @@ class Car extends Model
     protected $primaryKey = 'id';
 
 
-    protected $fillable = ['name','founded','description'];
+    protected $fillable = ['name','founded','description','car_image'];
     
 
     // Car Model Function

@@ -15,9 +15,9 @@ class CreateCarProductsTable extends Migration
     {
         Schema::create('car_product', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('çar_id')->unsigned();
+            $table->integer('car_id')->unsigned();
             $table->integer('product_id')->unsigned();
-            $table->foreign('çar_id')
+            $table->foreign('car_id')
                   ->references('id')
                   ->on('cars')
                   ->onDelete('cascade');

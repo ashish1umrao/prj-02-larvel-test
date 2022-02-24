@@ -3,6 +3,7 @@ import PropTypes from "prop-types"
 import ImPropTypes from "react-immutable-proptypes"
 import { Map, OrderedMap, List } from "immutable"
 import { getCommonExtensions, getSampleSchema, stringify, isEmptyValue } from "core/utils"
+import { getKnownSyntaxHighlighterLanguage } from "core/utils/jsonParse"
 
 export const getDefaultRequestBodyValue = (requestBody, mediaType, activeExamplesKey) => {
   const mediaTypeValue = requestBody.getIn(["content", mediaType])
@@ -87,7 +88,7 @@ const RequestBody = ({
   const sampleForMediaType = rawExamplesOfMediaType?.map((container, key) => {
     const val = container?.get("value", null)
     if(val) {
-      container = container.set("value",   getDefaultRequestBodyValue(
+      container = container.set("value", getDefaultRequestBodyValue(
         requestBody,
         contentType,
         key,
@@ -106,18 +107,22 @@ const RequestBody = ({
   }
 
   const isObjectContent = mediaTypeValue.getIn(["schema", "type"]) === "object"
+  const isBinaryFormat = mediaTypeValue.getIn(["schema", "format"]) === "binary"
+  const isBase64Format = mediaTypeValue.getIn(["schema", "format"]) === "base64"
 
   if(
     contentType === "application/octet-stream"
     || contentType.indexOf("image/") === 0
     || contentType.indexOf("audio/") === 0
     || contentType.indexOf("video/") === 0
+    || isBinaryFormat
+    || isBase64Format
   ) {
     const Input = getComponent("Input")
 
     if(!isExecute) {
       return <i>
-        Example values are not available for <code>application/octet-stream</code> media types.
+        Example values are not available for <code>{contentType}</code> media types.
       </i>
     }
 
@@ -155,16 +160,25 @@ const RequestBody = ({
               const currentValue = requestBodyValue.getIn([key, "value"])
               const currentErrors = requestBodyValue.getIn([key, "errors"]) || requestBodyErrors
               const included = requestBodyInclusionSetting.get(key) || false
-              let hasNonEmptyInitialVal = prop.has("default") || prop.has("example") || prop.hasIn(["items", "example"]) || prop.hasIn(["items", "default"]) || prop.has("enum") && prop.get("enum").size === 1
+
+              const useInitialValFromSchemaSamples = prop.has("default")
+                || prop.has("example")
+                || prop.hasIn(["items", "example"])
+                || prop.hasIn(["items", "default"])
+              const useInitialValFromEnum = prop.has("enum") && (prop.get("enum").size === 1 || required)
+              const useInitialValue = useInitialValFromSchemaSamples || useInitialValFromEnum
+
               let initialValue = ""
-              if(type === "array" && !hasNonEmptyInitialVal) {
+              if (type === "array" && !useInitialValue) {
                 initialValue = []
-              } else if (hasNonEmptyInitialVal) {
+              }
+              if (type === "object" || useInitialValue) {
                 // TODO: what about example or examples from requestBody could be passed as exampleOverride
                 initialValue = getSampleSchema(prop, false, {
                   includeWriteOnly: true
                 })
               }
+
               if (typeof initialValue !== "string" && type === "object") {
                initialValue = stringify(initialValue)
               }
@@ -228,6 +242,11 @@ const RequestBody = ({
     contentType,
     activeExamplesKey,
   )
+  let language = null
+  let testValueForJson = getKnownSyntaxHighlighterLanguage(sampleRequestBody)
+  if (testValueForJson) {
+    language = "json"
+  }
 
   return <div>
     { requestBodyDescription &&
@@ -272,6 +291,7 @@ const RequestBody = ({
             <HighlightCode
               className="body-param__example"
               getConfigs={getConfigs}
+              language={language}
               value={stringify(requestBodyValue) || sampleRequestBody}
             />
           }
